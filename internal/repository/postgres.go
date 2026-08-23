@@ -36,3 +36,16 @@ func (r *PostgresRepository) GetByCode(ctx context.Context, code string) (*model
 	}
 	return &link, nil
 }
+
+func (r *PostgresRepository) IncrementClicks(ctx context.Context, code string) error {
+	_, err := r.db.Exec(ctx, "UPDATE links SET clicks = clicks + 1 WHERE code = $1", code)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//db.QueryRow - если возвращаем 1 строку
+//db.Query - если возвращаем много строк
+//db.Exec - если только меняем
+//db.Begin - для транзакций
