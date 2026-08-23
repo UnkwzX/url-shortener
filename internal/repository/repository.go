@@ -19,5 +19,5 @@ type LinkRepository interface {
 	GetByCode(ctx context.Context, code string) (*models.Link, error)
 
 	// IncrementCount увеличивает счетчик по коду
-	IncrementCount(ctx context.Context, code string) error
+	IncrementClicks(ctx context.Context, code string) error
 }
