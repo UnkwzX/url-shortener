@@ -31,6 +31,21 @@ func NewLinkService(repo repository.LinkRepository) *LinkService {
 	return &LinkService{repo: repo}
 }
 
+func (s *LinkService) GetOriginalURL(ctx context.Context, code string) (string, error) {
+	// вызываем GetByCode
+	link, err := s.repo.GetByCode(ctx, code)
+	if err != nil {
+		return "", err
+	}
+	// проверка на ссылку без срока жизни и ее протухание
+	if link.ExpiresAt != nil && time.Now().After(*link.ExpiresAt) {
+		return "", ErrLinkExpired
+	}
+	// возвращаем оригинальный урл
+	return link.OriginalURL, nil
+
+}
+
 func (s *LinkService) CreateLink(ctx context.Context, originalURL string, ttlHours int) (*models.Link, error) {
 	var expiresAt *time.Time
 	// парсинг ссылки и проверка схемы
