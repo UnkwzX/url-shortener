@@ -4,22 +4,68 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
+	"errors"
 	"math/big"
+	"net/url"
+	"time"
+
+	"github.com/unkwzx/url-shortener/internal/models"
+	"github.com/unkwzx/url-shortener/internal/repository"
 )
+
+// Ошибки
+var ErrInvalidURL = errors.New("невалидная ссылка")
+var ErrLinkExpired = errors.New("ссылка протухла")
 
 // алфавит для генерации кода и длина кода
 const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-const lenght = 8
+const length = 8
+
+type LinkService struct {
+	repo repository.LinkRepository
+}
+
+func NewLinkService(repo repository.LinkRepository) *LinkService {
+	return &LinkService{repo: repo}
+}
+
+func (s *LinkService) CreateLink(ctx context.Context, originalURL string, ttlHours int) (*models.Link, error) {
+	var expiresAt *time.Time
+	// парсинг ссылки и проверка схемы
+	parsedURL, err := url.ParseRequestURI(originalURL)
+	if err != nil {
+		return nil, err
+	}
+	if parsedURL.Scheme != "https" && parsedURL.Scheme != "http" {
+		return nil, ErrInvalidURL
+	}
+	//генерация кода
+	code, _ := generateCode()
+	//жизнь ссылки
+	if ttlHours > 0 {
+		t := time.Now().Add(time.Duration(ttlHours) * time.Hour)
+		expiresAt = &t
+	}
+	//сборка
+	link := models.Link{Code: code, OriginalURL: originalURL, ExpiresAt: expiresAt}
+
+	err = s.repo.Create(ctx, &link)
+	if err != nil {
+		return nil, err
+	}
+	return &link, nil
+}
 
 func generateCode() (code string, err error) {
-	result := make([]byte, lenght)
+	result := make([]byte, length)
 	// максмимально число для rand.Int
-	max := big.NewInt(int64(len(charset)))
+	maxval := big.NewInt(int64(len(charset)))
 
-	for i, _ := range result {
+	for i := range result {
 		//выбирает случайное число в диапазоне 0-max
-		n, err := rand.Int(rand.Reader, max)
+		n, err := rand.Int(rand.Reader, maxval)
 		if err != nil {
 			return "", err
 		}
