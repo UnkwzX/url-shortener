@@ -61,14 +61,23 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	// заюираем код
 	code := r.PathValue("code")
-
+	//идем до бд, возвращаем ссылку по переданному коду
 	originalURL, err := h.service.GetOriginalURL(r.Context(), code)
+	//обрабатываем ошибки
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			sendError(w, http.StatusNotFound, "ссылка не найдена")
+			return
 		}
+		if errors.Is(err, service.ErrLinkExpired) {
+			sendError(w, http.StatusGone, "ссылка протухла")
+			return
+		}
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
 	}
-
+	// редирект из библиотеки
+	http.Redirect(w, r, originalURL, http.StatusFound)
 }
 
 //Хендлер — это то, что обрабатывает входящий HTTP-запрос и пишет ответ.
