@@ -80,6 +80,12 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, originalURL, http.StatusFound)
 }
 
+// роуты
+func (h *Handler) RegRouters(mux *http.ServeMux) {
+	mux.HandleFunc("POST /links", h.CreateLink)
+	mux.HandleFunc("GET /{code}", h.Redirect)
+}
+
 //Хендлер — это то, что обрабатывает входящий HTTP-запрос и пишет ответ.
 //w http.ResponseWriter — сюда пишется ответ (заголовки, статус, тело).
 //r *http.Request — сюда приходит вся информация о запросе (метод, URL, заголовки, тело, контекст).
