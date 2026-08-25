@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/unkwzx/url-shortener/internal/repository"
 	"github.com/unkwzx/url-shortener/internal/service"
 )
 
@@ -55,6 +56,19 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 	}
 	// отправляем ответ клиенту
 	sendJSON(w, http.StatusCreated, response)
+}
+
+func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
+	// заюираем код
+	code := r.PathValue("code")
+
+	originalURL, err := h.service.GetOriginalURL(r.Context(), code)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			sendError(w, http.StatusNotFound, "ссылка не найдена")
+		}
+	}
+
 }
 
 //Хендлер — это то, что обрабатывает входящий HTTP-запрос и пишет ответ.
