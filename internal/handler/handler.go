@@ -23,10 +23,10 @@ type CreateLinkResponse struct {
 }
 
 type Handler struct {
-	service service.LinkService
+	service *service.LinkService
 }
 
-func NewHandler(service service.LinkService) *Handler {
+func NewHandler(service *service.LinkService) *Handler {
 	return &Handler{service: service}
 }
 
