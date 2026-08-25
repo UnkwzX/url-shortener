@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/unkwzx/url-shortener/internal/repository"
@@ -46,6 +47,7 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 			sendError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		slog.Error("failed to create link", "error", err)
 		sendError(w, http.StatusInternalServerError, "error create url")
 		return
 	}
