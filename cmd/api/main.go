@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/unkwzx/url-shortener/internal/config"
+	"github.com/unkwzx/url-shortener/internal/handler"
+	"github.com/unkwzx/url-shortener/internal/repository"
+	"github.com/unkwzx/url-shortener/internal/service"
 )
 
 func main() {
@@ -43,4 +47,17 @@ func main() {
 	}
 	slog.Info("Успешное подключение к БД")
 
+	repo := repository.NewPostgresRepository(dbPool) //создаем репозиторий
+	svc := service.NewLinkService(repo)              // пердаем в сервис репоизторий
+	h := handler.NewHandler(svc)                     // передаем в хендлер сервис
+
+	// создаем роутер
+	mux := http.NewServeMux()
+	h.RegRouters(mux)
+
+	slog.Info("Сервер стартует", "port", cfg.ServerPort)
+	if err := http.ListenAndServe(":"+cfg.ServerPort, mux); err != nil {
+		slog.Error("Сервер не запустился", "error", err)
+		os.Exit(1)
+	}
 }
