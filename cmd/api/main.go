@@ -2,17 +2,38 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/unkwzx/url-shortener/internal/config"
 	"github.com/unkwzx/url-shortener/internal/handler"
 	"github.com/unkwzx/url-shortener/internal/repository"
 	"github.com/unkwzx/url-shortener/internal/service"
 )
+
+func runMigrations(dbURL string) error {
+	m, err := migrate.New("file://migrations", dbURL)
+
+	if err != nil {
+		slog.Error("ошибка инициализации мигратора", "error", err)
+		return err
+	}
+	defer m.Close()
+
+	err = m.Up()
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		slog.Error("ошибка миграции", "error", err)
+		return err
+	}
+	return nil
+}
 
 func main() {
 
@@ -46,6 +67,12 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("Успешное подключение к БД")
+
+	if err := runMigrations(cfg.DBURL); err != nil {
+		slog.Error("Ошибка миграции", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("Миграция выполнена успешно")
 
 	repo := repository.NewPostgresRepository(dbPool) //создаем репозиторий
 	svc := service.NewLinkService(repo)              // пердаем в сервис репоизторий

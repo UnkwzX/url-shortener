@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/unkwzx/url-shortener/internal/repository"
@@ -13,7 +14,7 @@ import (
 // от клиента
 type CreateLinkRequest struct {
 	URL      string `json:"url"`
-	ttlHours int    `json:"ttl_hours"`
+	TTLHours int    `json:"ttl_hours"`
 }
 
 // к клиенту
@@ -39,20 +40,21 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 		return                                                      // Выходим
 	}
 	// вызываем метод service CreateLink, передаем контекст, ссылку, срок жизни
-	link, err := h.service.CreateLink(r.Context(), req.URL, req.ttlHours)
+	link, err := h.service.CreateLink(r.Context(), req.URL, req.TTLHours)
 	//обрабатываем ошибку
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidURL) {
 			sendError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		slog.Error("failed to create link", "error", err)
 		sendError(w, http.StatusInternalServerError, "error create url")
 		return
 	}
 	// формируем ответ
 	response := CreateLinkResponse{
 		Code:     link.Code,
-		ShortURL: fmt.Sprintf("https://localhost:8080/%s", link.Code),
+		ShortURL: fmt.Sprintf("http://localhost:8080/%s", link.Code),
 	}
 	// отправляем ответ клиенту
 	sendJSON(w, http.StatusCreated, response)
