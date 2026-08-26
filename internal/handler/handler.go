@@ -54,7 +54,7 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 	// формируем ответ
 	response := CreateLinkResponse{
 		Code:     link.Code,
-		ShortURL: fmt.Sprintf("https://localhost:8080/%s", link.Code),
+		ShortURL: fmt.Sprintf("http://localhost:8080/%s", link.Code),
 	}
 	// отправляем ответ клиенту
 	sendJSON(w, http.StatusCreated, response)
