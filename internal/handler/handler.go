@@ -14,7 +14,7 @@ import (
 // от клиента
 type CreateLinkRequest struct {
 	URL      string `json:"url"`
-	ttlHours int    `json:"ttl_hours"`
+	TTLHours int    `json:"ttl_hours"`
 }
 
 // к клиенту
@@ -40,7 +40,7 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 		return                                                      // Выходим
 	}
 	// вызываем метод service CreateLink, передаем контекст, ссылку, срок жизни
-	link, err := h.service.CreateLink(r.Context(), req.URL, req.ttlHours)
+	link, err := h.service.CreateLink(r.Context(), req.URL, req.TTLHours)
 	//обрабатываем ошибку
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidURL) {
